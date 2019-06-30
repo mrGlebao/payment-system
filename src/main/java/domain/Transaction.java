@@ -16,7 +16,8 @@ public final class Transaction {
         return id != null
                 && from != null
                 && to != null
-                && amount != null;
+                && amount != null
+                && !from.equals(to);
     }
 
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import domain.Transaction;
 import domain.User;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import repository.TransactionRepository;
 import repository.TransactionRepositoryImpl;
 import repository.UserRepository;
@@ -22,12 +23,14 @@ public class TransferHandler implements HttpHandlerProvider {
 
     @Override
     public HttpHandler asHandler() {
-//        if (exchange.isInIoThread()) {
-//            exchange.dispatch(this);
-//            return;
-//        }
-        return exchange -> {
-            exchange.dispatch(() -> {
+
+        return new HttpHandler() {
+            @Override
+            public void handleRequest(HttpServerExchange exchange) {
+                if (exchange.isInIoThread()) {
+                    exchange.dispatch(this);
+                    return;
+                }
                 try {
                     exchange.startBlocking();
                     Transaction t = silentRead(exchange.getInputStream(), Transaction.class)
@@ -35,6 +38,7 @@ public class TransferHandler implements HttpHandlerProvider {
                             .orElseThrow(IllegalArgumentException::new);
                     if (transactionRepository.contains(t.getId())) {
                         System.out.println("Transaction has already been processed");
+                        responseOkToClient(exchange);
                         return;
                     }
                     User sender = userRepository.getOne(t.getFrom())
@@ -43,16 +47,27 @@ public class TransferHandler implements HttpHandlerProvider {
                             .orElseThrow(IllegalArgumentException::new);
                     transactionRepository.add(t);
                     sender.transfer(receiver, t.getAmount());
-                    exchange.getResponseSender().send("Ok");
+                    responseOkToClient(exchange);
                 } catch (IllegalArgumentException ex) {
-                    exchange.setStatusCode(400);
-                    exchange.getResponseSender().send("Not ok");
+                    ex.printStackTrace();
+                    responseNotOkToClient(exchange, 400);
                 } catch (RuntimeException ex) {
-                    exchange.setStatusCode(500);
-                    exchange.getResponseSender().send("Not ok");
+                    ex.printStackTrace();
+                    responseNotOkToClient(exchange, 500);
                 }
-            });
+            }
         };
+    }
+
+    private static void responseOkToClient(HttpServerExchange exchange) {
+        exchange.setStatusCode(200);
+        exchange.getResponseSender().send("Ok");
+    }
+
+    private static void responseNotOkToClient(HttpServerExchange exchange,
+                                              int statusCode) {
+        exchange.setStatusCode(statusCode);
+        exchange.getResponseSender().send("Not ok");
     }
 
     private static <T> Optional<T> silentRead(InputStream s,
