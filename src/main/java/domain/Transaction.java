@@ -1,5 +1,6 @@
 package domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ public final class Transaction {
     private Long to;
     private BigDecimal amount;
 
+    @JsonIgnore
     public boolean isValid() {
         return id != null
                 && from != null
