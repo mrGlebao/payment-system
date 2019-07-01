@@ -1,6 +1,7 @@
 package handlers;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.PaymentIdDto;
 import io.undertow.server.HttpHandler;
 import io.undertow.util.Headers;
@@ -11,11 +12,14 @@ public class TransferIdHandler implements HttpHandlerProvider {
 
     private static AtomicLong id = new AtomicLong(0);
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     @Override
     public HttpHandler asHandler() {
         return exchange -> {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-            exchange.getResponseSender().send(new PaymentIdDto(id.incrementAndGet()).toString());
+            exchange.setStatusCode(200);
+            exchange.getResponseSender().send(mapper.writeValueAsString(new PaymentIdDto(id.incrementAndGet())));
         };
     }
 }
