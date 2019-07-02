@@ -3,24 +3,30 @@ package handlers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import domain.Transaction;
 import domain.User;
+import exceptions.TransactionAlreadyExistException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import repository.TransactionRepository;
-import repository.TransactionRepositoryImpl;
 import repository.UserRepository;
-import repository.UserRepositoryImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class TransferHandler implements HttpHandlerProvider {
 
 
-    private final UserRepository userRepository = new UserRepositoryImpl();
-    private final TransactionRepository transactionRepository = new TransactionRepositoryImpl();
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
+    private final ObjectMapper mapper;
+
+    public TransferHandler(UserRepository userRepository,
+                           TransactionRepository transactionRepository,
+                           ObjectMapper mapper) {
+        this.userRepository = userRepository;
+        this.transactionRepository = transactionRepository;
+        this.mapper = mapper;
+    }
 
     @Override
     public HttpHandler asHandler() {
@@ -32,27 +38,29 @@ public class TransferHandler implements HttpHandlerProvider {
                     exchange.dispatch(this);
                     return;
                 }
-                exchangeConsumer.accept(exchange);
+                exchange.startBlocking();
+                accept(exchange);
             }
         };
     }
 
-    private final Consumer<HttpServerExchange> exchangeConsumer = exchange -> {
+    private void accept(HttpServerExchange exchange) {
         try {
-            exchange.startBlocking();
             Transaction t = silentRead(exchange.getInputStream(), Transaction.class)
                     .filter(Transaction::isValid)
                     .orElseThrow(IllegalArgumentException::new);
-            if (transactionRepository.contains(t.getId())) {
-                System.out.println("Transaction has already been processed");
-                responseOkToClient(exchange);
-                return;
-            }
+
             User sender = userRepository.getOne(t.getFrom())
                     .orElseThrow(IllegalArgumentException::new);
             User receiver = userRepository.getOne(t.getTo())
                     .orElseThrow(IllegalArgumentException::new);
-            transactionRepository.add(t);
+            try {
+                transactionRepository.addIfNotExist(t);
+            } catch (TransactionAlreadyExistException ex) {
+                System.out.println(ex.getMessage());
+                responseOkToClient(exchange);
+                return;
+            }
             sender.transfer(receiver, t.getAmount());
             responseOkToClient(exchange);
         } catch (IllegalArgumentException ex) {
@@ -62,7 +70,7 @@ public class TransferHandler implements HttpHandlerProvider {
             ex.printStackTrace();
             responseNotOkToClient(exchange, 500);
         }
-    };
+    }
 
     private static void responseOkToClient(HttpServerExchange exchange) {
         exchange.setStatusCode(200);
@@ -75,8 +83,8 @@ public class TransferHandler implements HttpHandlerProvider {
         exchange.getResponseSender().send("Not ok");
     }
 
-    private static <T> Optional<T> silentRead(InputStream s,
-                                              Class<T> resultClass) {
+    private <T> Optional<T> silentRead(InputStream s,
+                                       Class<T> resultClass) {
         try {
             return Optional.ofNullable(mapper.readValue(s, resultClass));
         } catch (IOException e) {

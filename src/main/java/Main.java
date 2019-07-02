@@ -1,13 +1,21 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
 import handlers.TransferHandler;
 import handlers.TransferIdHandler;
+import repository.TransactionRepositoryStub;
+import repository.UserRepositoryStub;
 import server.UndertowServerProvider;
 
 public class Main {
 
 
     public static void main(String[] args) {
+        ObjectMapper mapper = new ObjectMapper();
         UndertowServerProvider
-                .getServer(new TransferIdHandler(), new TransferHandler())
+                .getServer(new TransferIdHandler(mapper),
+                        new TransferHandler(
+                                new UserRepositoryStub(),
+                                new TransactionRepositoryStub(),
+                                mapper))
                 .start();
     }
 

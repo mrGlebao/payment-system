@@ -7,9 +7,14 @@ import io.undertow.Undertow;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import repository.TransactionRepository;
+import repository.TransactionRepositoryStub;
+import repository.UserRepository;
+import repository.UserRepositoryStub;
 import server.UndertowServerProvider;
 
 import java.io.IOException;
@@ -19,11 +24,16 @@ import static org.junit.Assert.assertEquals;
 
 public class TransferHandlerTest {
 
-    private static final Undertow server = UndertowServerProvider
-            .getServer(new TransferIdHandler(), new TransferHandler());
+    private static final OkHttpClient client = new OkHttpClient();
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final UserRepository userRepository = new UserRepositoryStub();
+    private static final TransactionRepository transactionRepository = new TransactionRepositoryStub();
+    private static final Undertow server = UndertowServerProvider
+            .getServer(new TransferIdHandler(mapper),
+                    new TransferHandler(userRepository, transactionRepository, mapper));
 
     private static Request request;
+
 
     static {
         try {
@@ -41,8 +51,6 @@ public class TransferHandlerTest {
         }
     }
 
-    private final OkHttpClient client = new OkHttpClient();
-
     @BeforeClass
     public static void initServer() {
         server.start();
@@ -52,6 +60,9 @@ public class TransferHandlerTest {
     public static void shutdownServer() {
         server.stop();
     }
+
+    @After
+
 
     @Test
     public void transfer_statusIs200() throws IOException {

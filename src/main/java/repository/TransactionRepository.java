@@ -1,11 +1,10 @@
 package repository;
 
 import domain.Transaction;
+import exceptions.TransactionAlreadyExistException;
 
 public interface TransactionRepository {
 
-    void add(Transaction transaction);
-
-    boolean contains(Long id);
+    void addIfNotExist(Transaction transaction) throws TransactionAlreadyExistException;
 
 }
