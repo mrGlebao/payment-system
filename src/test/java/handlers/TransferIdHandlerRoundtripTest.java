@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-public class TransferIdHandlerTest {
+public class TransferIdHandlerRoundtripTest {
 
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final UserRepository userRepository = new UserRepositoryStub();
