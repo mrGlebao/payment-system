@@ -13,7 +13,7 @@ import repository.TransactionRepository;
 import repository.TransactionRepositoryStub;
 import repository.UserRepository;
 import repository.UserRepositoryStub;
-import server.UndertowServerProvider;
+import server.UndertowServerFactory;
 
 import java.io.IOException;
 
@@ -25,8 +25,8 @@ public class TransferIdHandlerRoundtripTest {
     private static final UserRepository userRepository = new UserRepositoryStub();
     private static final TransactionRepository transactionRepository = new TransactionRepositoryStub();
 
-    private static final Undertow server = UndertowServerProvider
-            .getServer(new TransferIdHandler(mapper), new TransferHandler(userRepository, transactionRepository, mapper));
+    private static final Undertow server = UndertowServerFactory
+            .constructServer(new TransferIdHandler(mapper), new TransferHandler(userRepository, transactionRepository, mapper));
     private static final Request request = new Request.Builder()
             .url("http://localhost:8080/id")
             .build();

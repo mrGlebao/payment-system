@@ -9,6 +9,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Заглушка - реализация репозитория пользователей
+ * Для простоты остановился на мапе в хипе.
+ */
 public final class UserRepositoryStub implements UserRepository {
 
     private static final Map<Long, User> users = Stream.of(

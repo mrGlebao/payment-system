@@ -6,6 +6,10 @@ import exceptions.TransactionAlreadyExistException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Заглушка - реализация репозитория транзакций
+ * Для простоты остановился на мапе в хипе.
+ */
 public final class TransactionRepositoryStub implements TransactionRepository {
 
     private final Map<Long, Transaction> transactions = new HashMap<>();

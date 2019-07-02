@@ -6,7 +6,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 
-public final class UndertowServerProvider {
+public final class UndertowServerFactory {
 
     private static HttpHandler routes(TransferIdHandler idHandler,
                                       TransferHandler transferHandler) {
@@ -15,8 +15,8 @@ public final class UndertowServerProvider {
                 .put("/transfer", transferHandler.asHandler());
     }
 
-    public static Undertow getServer(TransferIdHandler idHandler,
-                                     TransferHandler transferHandler) {
+    public static Undertow constructServer(TransferIdHandler idHandler,
+                                           TransferHandler transferHandler) {
         return Undertow.builder()
                 .addHttpListener(8080, "localhost")
                 .setHandler(routes(idHandler, transferHandler))

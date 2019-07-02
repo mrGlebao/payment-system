@@ -1,10 +1,11 @@
 package handlers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import domain.Transaction;
 import domain.User;
+import dto.MessageResponse;
 import exceptions.HttpCodeException;
-import exceptions.TransactionAlreadyExistException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -13,8 +14,12 @@ import repository.UserRepository;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.Optional;
 
+/**
+ * Обработчик для перевода средств
+ */
 public final class TransferHandler implements HttpHandlerProvider {
 
 
@@ -36,6 +41,7 @@ public final class TransferHandler implements HttpHandlerProvider {
             @Override
             public void handleRequest(HttpServerExchange exchange) {
                 if (exchange.isInIoThread()) {
+                    // dispatch to worker thread
                     exchange.dispatch(this);
                     return;
                 }
@@ -54,13 +60,9 @@ public final class TransferHandler implements HttpHandlerProvider {
                     .orElseThrow(() -> new HttpCodeException(404, "can't find user, id " + transaction.getFrom()));
             User receiver = userRepository.getOne(transaction.getTo())
                     .orElseThrow(() -> new HttpCodeException(404, "can't find user, id " + transaction.getTo()));
-            try {
-                transactionRepository.addIfNotExist(transaction);
-            } catch (TransactionAlreadyExistException ex) {
-                ex.printStackTrace();
-                throw new HttpCodeException(200, ex.getMessage());
-            }
-            sender.transfer(receiver, transaction.getAmount());
+            tryOrThrowHttpCodeException(200, () -> transactionRepository.addIfNotExist(transaction));
+            BigDecimal amountToTransfer = transaction.getAmount();
+            tryOrThrowHttpCodeException(400, () -> sender.transfer(receiver, amountToTransfer));
             responseToClient(exchange, 200, "Success");
         } catch (RuntimeException ex) {
             ex.printStackTrace();
@@ -73,12 +75,28 @@ public final class TransferHandler implements HttpHandlerProvider {
         }
     }
 
-    private static void responseToClient(HttpServerExchange exchange,
-                                         int statusCode,
-                                         String message) {
+    private void responseToClient(HttpServerExchange exchange,
+                                  int statusCode,
+                                  String message) {
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        exchange.setStatusCode(statusCode);
-        exchange.getResponseSender().send(message);
+        try {
+            exchange.setStatusCode(statusCode);
+            exchange.getResponseSender().send(mapper.writeValueAsString(new MessageResponse(message)));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            exchange.setStatusCode(500);
+            exchange.getResponseSender().send("Can't write correct response");
+        }
+    }
+
+    private void tryOrThrowHttpCodeException(int code,
+                                             DefinitelyNotRunnable nr) {
+        try {
+            nr.call();
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            throw new HttpCodeException(code, ex.getMessage());
+        }
     }
 
     private <T> Optional<T> readFromInputStream(InputStream s,
@@ -90,4 +108,10 @@ public final class TransferHandler implements HttpHandlerProvider {
             return Optional.empty();
         }
     }
+
+    private interface DefinitelyNotRunnable {
+
+        void call();
+    }
+
 }

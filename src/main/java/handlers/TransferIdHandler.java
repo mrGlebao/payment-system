@@ -8,8 +8,15 @@ import io.undertow.util.Headers;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Обработчик для получения id при переводе средств
+ * Id обеспечивает идемпотентность запроса, и, как следствие, возможность его безопасно ретраить.
+ */
 public final class TransferIdHandler implements HttpHandlerProvider {
 
+    /**
+     * По-хорошему стоило сделать строковый id, но для наглядности я решил обойтись long'ом
+     */
     private final AtomicLong id;
     private final ObjectMapper mapper;
 

@@ -18,7 +18,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import repository.TransactionRepository;
 import repository.UserRepository;
-import server.UndertowServerProvider;
+import server.UndertowServerFactory;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -42,8 +42,8 @@ public class TransferHandlerRoundtripTest {
 
     private static TransactionRepository transactionRepository = mock(TransactionRepository.class);
 
-    private static final Undertow server = UndertowServerProvider
-            .getServer(new TransferIdHandler(mapper),
+    private static final Undertow server = UndertowServerFactory
+            .constructServer(new TransferIdHandler(mapper),
                     new TransferHandler(userRepository, transactionRepository, mapper));
 
     private Request request;
@@ -143,6 +143,51 @@ public class TransferHandlerRoundtripTest {
 
         assertSame("Payer balance is incorrect", 0, tr.getAmount().compareTo(fromAmount.subtract(from.getAmount())));
         assertSame("Receiver balance is incorrect", 0, tr.getAmount().compareTo(to.getAmount().subtract(toAmount)));
+    }
+
+    @Test
+    public void transfer_ifNotEnoughMoneyReturn400() throws IOException {
+        Mockito.reset(userRepository, transactionRepository);
+        BigDecimal fromAmount = BigDecimal.valueOf(20.00);
+        User from = new User(1L, "User from", fromAmount);
+        BigDecimal toAmount = BigDecimal.valueOf(10.00);
+        User to = new User(2L, "User to", toAmount);
+        when(userRepository.getOne(1L)).thenReturn(Optional.of(from));
+        when(userRepository.getOne(2L)).thenReturn(Optional.of(to));
+        Transaction tr = new Transaction();
+        tr.setFrom(1L);
+        tr.setTo(2L);
+        tr.setId(3L);
+        tr.setAmount(BigDecimal.valueOf(1000.00));
+        request = new Request.Builder()
+                .url("http://localhost:8080/transfer")
+                .put(RequestBody.create(mapper.writeValueAsBytes(tr)))
+                .build();
+
+        assertEquals(400, client.newCall(request).execute().code());
+    }
+
+    @Test
+    public void transfer_ifNotEnoughMoneyDoNotTransfer() throws IOException {
+        Mockito.reset(userRepository, transactionRepository);
+        BigDecimal fromAmount = BigDecimal.valueOf(20.00);
+        User from = new User(1L, "User from", fromAmount);
+        BigDecimal toAmount = BigDecimal.valueOf(10.00);
+        User to = new User(2L, "User to", toAmount);
+        when(userRepository.getOne(1L)).thenReturn(Optional.of(from));
+        when(userRepository.getOne(2L)).thenReturn(Optional.of(to));
+        Transaction tr = new Transaction();
+        tr.setFrom(1L);
+        tr.setTo(2L);
+        tr.setId(3L);
+        tr.setAmount(BigDecimal.valueOf(1000.00));
+        request = new Request.Builder()
+                .url("http://localhost:8080/transfer")
+                .put(RequestBody.create(mapper.writeValueAsBytes(tr)))
+                .build();
+
+        assertSame("Payer balance is incorrect", 0, from.getAmount().compareTo(fromAmount));
+        assertSame("Receiver balance is incorrect", 0, to.getAmount().compareTo(toAmount));
     }
 
 }
