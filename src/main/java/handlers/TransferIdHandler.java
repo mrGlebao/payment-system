@@ -10,12 +10,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class TransferIdHandler implements HttpHandlerProvider {
 
-    private static AtomicLong id = new AtomicLong(0);
-
+    private final AtomicLong id;
     private final ObjectMapper mapper;
 
     public TransferIdHandler(ObjectMapper mapper) {
         this.mapper = mapper;
+        this.id = new AtomicLong(0L);
     }
 
     @Override
