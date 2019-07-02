@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaymentIdDto {
+public final class PaymentIdDto {
 
     @Getter
     @Setter

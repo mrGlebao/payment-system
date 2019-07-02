@@ -14,11 +14,12 @@ public final class Transaction {
     private BigDecimal amount;
 
     @JsonIgnore
-    public boolean isValid() {
+    public final boolean isValid() {
         return id != null
                 && from != null
                 && to != null
                 && amount != null
+                && amount.signum() != -1
                 && !from.equals(to);
     }
 
