@@ -9,6 +9,10 @@ import okhttp3.Request;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import repository.TransactionRepository;
+import repository.TransactionRepositoryStub;
+import repository.UserRepository;
+import repository.UserRepositoryStub;
 import server.UndertowServerProvider;
 
 import java.io.IOException;
@@ -17,13 +21,16 @@ import static org.junit.Assert.assertEquals;
 
 public class TransferIdHandlerTest {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final UserRepository userRepository = new UserRepositoryStub();
+    private static final TransactionRepository transactionRepository = new TransactionRepositoryStub();
+
     private static final Undertow server = UndertowServerProvider
-            .getServer(new TransferIdHandler(), new TransferHandler());
+            .getServer(new TransferIdHandler(mapper), new TransferHandler(userRepository, transactionRepository, mapper));
     private static final Request request = new Request.Builder()
             .url("http://localhost:8080/id")
             .build();
     private final OkHttpClient client = new OkHttpClient();
-    private final ObjectMapper mapper = new ObjectMapper();
 
     @BeforeClass
     public static void initServer() {

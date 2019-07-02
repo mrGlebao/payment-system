@@ -12,7 +12,11 @@ public class TransferIdHandler implements HttpHandlerProvider {
 
     private static AtomicLong id = new AtomicLong(0);
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
+
+    public TransferIdHandler(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Override
     public HttpHandler asHandler() {

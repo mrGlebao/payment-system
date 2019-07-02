@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class UserRepositoryImpl implements UserRepository {
+public class UserRepositoryStub implements UserRepository {
 
     private static final Map<Long, User> users = Stream.of(
             new User(1L, "Anna", BigDecimal.TEN),
