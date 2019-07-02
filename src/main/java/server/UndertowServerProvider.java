@@ -6,7 +6,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 
-public class UndertowServerProvider {
+public final class UndertowServerProvider {
 
     private static HttpHandler routes(TransferIdHandler idHandler,
                                       TransferHandler transferHandler) {

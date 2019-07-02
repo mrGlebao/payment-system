@@ -1,6 +1,6 @@
 package exceptions;
 
-public class HttpCodeException extends RuntimeException {
+public final class HttpCodeException extends RuntimeException {
 
     private final int httpCode;
 

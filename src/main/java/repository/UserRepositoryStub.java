@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class UserRepositoryStub implements UserRepository {
+public final class UserRepositoryStub implements UserRepository {
 
     private static final Map<Long, User> users = Stream.of(
             new User(1L, "Anna", BigDecimal.TEN),
@@ -18,7 +18,7 @@ public class UserRepositoryStub implements UserRepository {
     ).collect(Collectors.toMap(User::getId, Function.identity()));
 
     @Override
-    public Optional<User> getOne(Long id) {
+    public final Optional<User> getOne(Long id) {
         return Optional.ofNullable(users.get(id));
     }
 }

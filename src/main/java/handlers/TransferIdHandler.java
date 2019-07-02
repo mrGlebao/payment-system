@@ -8,7 +8,7 @@ import io.undertow.util.Headers;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class TransferIdHandler implements HttpHandlerProvider {
+public final class TransferIdHandler implements HttpHandlerProvider {
 
     private final AtomicLong id;
     private final ObjectMapper mapper;
@@ -19,7 +19,7 @@ public class TransferIdHandler implements HttpHandlerProvider {
     }
 
     @Override
-    public HttpHandler asHandler() {
+    public final HttpHandler asHandler() {
         return exchange -> {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
             exchange.setStatusCode(200);

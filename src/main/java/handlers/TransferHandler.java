@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class TransferHandler implements HttpHandlerProvider {
+public final class TransferHandler implements HttpHandlerProvider {
 
 
     private final UserRepository userRepository;
@@ -31,8 +31,7 @@ public class TransferHandler implements HttpHandlerProvider {
     }
 
     @Override
-    public HttpHandler asHandler() {
-
+    public final HttpHandler asHandler() {
         return new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) {
