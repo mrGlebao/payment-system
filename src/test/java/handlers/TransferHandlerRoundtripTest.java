@@ -39,7 +39,6 @@ public class TransferHandlerRoundtripTest {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private static UserRepository userRepository = mock(UserRepository.class);
-
     private static TransactionRepository transactionRepository = mock(TransactionRepository.class);
 
     private static final Undertow server = UndertowServerFactory
@@ -48,6 +47,16 @@ public class TransferHandlerRoundtripTest {
 
     private Request request;
     private Transaction transaction;
+
+    @BeforeClass
+    public static void initServer() {
+        server.start();
+    }
+
+    @AfterClass
+    public static void shutdownServer() {
+        server.stop();
+    }
 
     @Before
     public void initSuccessRoute() throws JsonProcessingException {
@@ -66,17 +75,6 @@ public class TransferHandlerRoundtripTest {
                 .url("http://localhost:8080/transfer")
                 .put(RequestBody.create(mapper.writeValueAsBytes(transaction)))
                 .build();
-    }
-
-
-    @BeforeClass
-    public static void initServer() {
-        server.start();
-    }
-
-    @AfterClass
-    public static void shutdownServer() {
-        server.stop();
     }
 
     @Test

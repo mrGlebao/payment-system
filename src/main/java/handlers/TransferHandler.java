@@ -9,6 +9,7 @@ import exceptions.HttpCodeException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import lombok.RequiredArgsConstructor;
 import repository.TransactionRepository;
 import repository.UserRepository;
 
@@ -20,20 +21,12 @@ import java.util.Optional;
 /**
  * Обработчик для перевода средств
  */
+@RequiredArgsConstructor
 public final class TransferHandler implements HttpHandlerProvider {
-
 
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final ObjectMapper mapper;
-
-    public TransferHandler(UserRepository userRepository,
-                           TransactionRepository transactionRepository,
-                           ObjectMapper mapper) {
-        this.userRepository = userRepository;
-        this.transactionRepository = transactionRepository;
-        this.mapper = mapper;
-    }
 
     @Override
     public final HttpHandler asHandler() {
@@ -71,7 +64,7 @@ public final class TransferHandler implements HttpHandlerProvider {
                 responseToClient(exchange, coded.getHttpCode(), coded.getMessage());
                 return;
             }
-            responseToClient(exchange, 500, "Something bad happened");
+            responseToClient(exchange, 500, "Something bad happened: " + ex.getMessage());
         }
     }
 
@@ -85,7 +78,7 @@ public final class TransferHandler implements HttpHandlerProvider {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             exchange.setStatusCode(500);
-            exchange.getResponseSender().send("Can't write correct response");
+            exchange.getResponseSender().send("Can't write correct response: " + e.getMessage());
         }
     }
 
@@ -109,6 +102,7 @@ public final class TransferHandler implements HttpHandlerProvider {
         }
     }
 
+    @FunctionalInterface
     private interface DefinitelyNotRunnable {
 
         void call();
