@@ -18,7 +18,7 @@ public final class User {
     public final String name;
     private BigDecimal amount;
 
-    public final void transfer(User user,
+    public final synchronized void transfer(User user,
                                BigDecimal amount) {
         if (amount == null || amount.signum() < 0) {
             throw new IllegalArgumentException("Wrong amount: " + amount);
